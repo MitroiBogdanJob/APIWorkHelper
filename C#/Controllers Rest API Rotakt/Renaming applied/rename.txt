@@ -1,0 +1,13 @@
+-- Redenumim procedurile stocate existente
+
+-- RepPartnerWebApi devine Api_ShowPartners
+EXEC sp_rename 'repPartnerWebApi', 'Api_ShowPartners';
+
+-- ShowStockWebApi devine Api_ShowStocks
+EXEC sp_rename 'ShowStockWebApiV2', 'Api_ShowStocks';
+
+-- InvoicePaymentApi devine Api_ShowInvoicePayments
+EXEC sp_rename 'InvoicePaymentsApi_NoDateFilter', 'Api_ShowInvoicePayments';
+
+-- AgentDetailsWebApi devine Api_ShowAgentDetails
+EXEC sp_rename 'AgentDetailsWebApi', 'Api_ShowAgentsDetails';

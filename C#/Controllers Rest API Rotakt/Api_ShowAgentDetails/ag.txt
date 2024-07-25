@@ -1,0 +1,59 @@
+
+CREATE PROCEDURE GetUniquePartnerDetails
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- CTE (Common Table Expression) pentru a elimina NULL-urile și a selecta coloanele dorite
+    WITH FilteredResults AS (
+        SELECT
+            ps.LastName,
+            ps.FirstName,
+            pt.E_Mail,
+            pt.PhoneNumber,
+			pt.UniqueID,
+            pt.PartnerCode,
+			pt.PartnerId         
+        FROM
+            Partner pt
+
+        LEFT JOIN
+            Person ps ON ps.PersonId = pt.ResponsableEmployeeId
+
+        WHERE
+            ps.LastName IS NOT NULL
+            AND ps.FirstName IS NOT NULL
+    ),
+    -- CTE pentru a elimina duplicatele
+    UniqueResults AS (
+        SELECT
+            LastName,
+            FirstName,
+            E_Mail,
+            PhoneNumber,
+			UniqueID,
+            PartnerCode,
+            PartnerId,
+            ROW_NUMBER() OVER (PARTITION BY LastName, FirstName ORDER BY LastName, FirstName) AS RowNum
+        FROM
+            FilteredResults
+    )
+    -- Selectarea rezultatelor unice
+    SELECT
+        LastName,
+        FirstName,
+        E_Mail,
+        PhoneNumber,
+		UniqueID,
+        PartnerCode,
+		PartnerId
+        
+    FROM
+        UniqueResults
+    WHERE
+        RowNum = 1;
+
+    SET NOCOUNT OFF;
+
+	END;
+GO

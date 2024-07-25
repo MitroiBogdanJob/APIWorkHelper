@@ -1,0 +1,11 @@
+acum vreau sa crrez un endpoint folosind procedura stocata de mi ai facuto tu mai sus,  denumita de tine GetUniqueInvoiceDetails, am creat-o in baza de date dar eu am numitoInvoicePaymentsApi_NoDateFilter si veau sa folosesti acest nume pt controller. Iti las un cod ca exemplu, vreau sa te iei exact dupa el si eventual sa il mai inbunatatesti daca consideri ca este nevoie
+
+
+
+
+
+[HttpGet("by-date")]
+
+
+
+InvoicePaymentsApi_NoDateFilter

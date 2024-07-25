@@ -1,0 +1,165 @@
+
+using System;
+namespace ROTAKT.API.ControllerOrder
+{
+
+    using System;
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    public class ControllerOrderAttribute : Attribute
+    {
+        public int Order { get; }
+
+        public ControllerOrderAttribute(int order)
+        {
+            Order = order;
+        }
+    }
+
+
+}
+
+
+
+
+using System;
+namespace ROTAKT.API.ControllerOrder
+{
+ 
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class SwaggerOrderAttribute : Attribute
+    {
+        public int Order { get; }
+
+        public SwaggerOrderAttribute(int order)
+        {
+            Order = order;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ROTAKT.API.ControllerOrder;
+using ROTAKT.API.Data.DatabaseProduction;
+using ROTAKT.API.Models;
+
+namespace ROTAKT.API.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    [ControllerOrder(1)] // Adaugă ordinea controllerului
+    public class PartenersController : ControllerBase
+    {
+        private readonly AppDbContextProduction _appDb;
+        private readonly ILogger<PartenersController> _logger;
+        public PartenersController(AppDbContextProduction appDb, ILogger<PartenersController> logger)
+        {
+            _appDb = appDb ?? throw new ArgumentNullException(nameof(appDb));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+
+        /// <summary>
+        ///  Retrieves all the Partners with pagination and filtering options.
+        /// </summary>
+        /// <param name="page"> The page number, default is 1.</param>
+        /// <param name="pageSize"> The size of the page, default is 10. If 0, all records will be returned.</param>
+        /// <param name="partnerId"> Optional filter by PartnerId. Must be a non-negative integer.</param>
+        /// <returns>A list of partners.</returns>
+        [HttpGet]
+        [SwaggerOrder(1)]
+        public async Task<IActionResult> GetAllPartners(int page = 1, int pageSize = 10, int? partnerId = null)
+        {
+            #region Validate Parameters
+            // Validate page parameter
+            if (page < 1)
+            {
+                _logger.LogWarning("Invalid page number: {Page}", page);
+                return BadRequest("The page number must be at least 1.");
+            }
+
+            // Validate pageSize parameter
+            if (pageSize < 0)
+            {
+                _logger.LogWarning("Invalid page size: {PageSize}", pageSize);
+                return BadRequest("The page size must be at least 0.");
+            }
+
+            // Validate partnerId parameter
+            if (partnerId.HasValue && partnerId.Value < 0)
+            {
+                _logger.LogWarning("Invalid partner ID: {PartnerId}", partnerId);
+                return BadRequest("The partner ID must be a non-negative integer.");
+            }
+            #endregion Validate Parameters
+
+            try
+            {
+                _logger.LogInformation("Fetching partners with page: {Page}, pageSize: {PageSize}, partnerId: {PartnerId}", page, pageSize, partnerId);
+
+                IQueryable<Api_ShowPartners> query = _appDb.Partners;
+
+                // Filter by PartnerId if specified
+                if (partnerId.HasValue)
+                {
+                    query = query.Where(p => p.PartnerId == partnerId.Value);
+                }
+
+                // If pageSize is 0, return all records
+                if (pageSize == 0)
+                {
+                    var partners = await query.AsNoTracking().ToListAsync().ConfigureAwait(false);
+                    if (partners.Count == 0)
+                    {
+                        _logger.LogInformation("No partners found.");
+                        return NoContent();
+                    }
+                    _logger.LogInformation("{Count} partners found.", partners.Count);
+                    return Ok(partners);
+                }
+                else
+                {
+                    int offset = (page - 1) * pageSize;
+
+                    // Retrieve only the requested page of data using Skip and Take
+                    var partners = await query
+                        .AsNoTracking()
+                        .Skip(offset)
+                        .Take(pageSize)
+                        .ToListAsync()
+                        .ConfigureAwait(false);
+
+                    if (partners.Count == 0)
+                    {
+                        _logger.LogInformation("No partners found for the given criteria.");
+                        return NoContent();
+                    }
+
+                    _logger.LogInformation("{Count} partners found.", partners.Count);
+                    return Ok(partners);
+                } 
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return a 500 status code with a detailed message
+                _logger.LogError(ex, "An error occurred while processing the request for GetAllPartners.");
+                return StatusCode(500, "An error occurred while processing the request. Error: " + ex.Message);
+            }
+        }
+
+
+
+
+    }
+}

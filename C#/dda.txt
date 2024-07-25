@@ -1,0 +1,74 @@
+Desigur! Să luăm un exemplu simplu pentru a ilustra utilizarea fiecărei metode într-un scenariu comun.
+
+Presupunem că avem o entitate Product și dorim să obținem toate produsele din baza de date și să le procesăm în codul nostru C#. Vom folosi Entity Framework Core pentru a interoga baza de date.
+
+csharp
+Copy code
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+public class ApplicationDbContext : DbContext
+{
+    public DbSet<Product> Products { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // Configurează conexiunea la baza de date
+        optionsBuilder.UseSqlServer("connection_string_here");
+    }
+}
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Creează instanța contextului bazei de date
+        using (var context = new ApplicationDbContext())
+        {
+            // Interogare pentru a obține toate produsele
+            var query = context.Products;
+
+            // Utilizarea AsEnumerable() pentru a aduce datele în memorie
+            var products = query.AsEnumerable();
+
+            // Procesează produsele în codul C#
+            foreach (var product in products)
+            {
+                Console.WriteLine($"Product ID: {product.Id}, Name: {product.Name}, Price: {product.Price}");
+            }
+
+            // Utilizarea ToListAsync() pentru a obține rezultatele sub formă de listă asincronă
+            var productsAsync = await query.ToListAsync();
+
+            // Procesează produsele asincron în codul C#
+            foreach (var product in productsAsync)
+            {
+                Console.WriteLine($"Product ID: {product.Id}, Name: {product.Name}, Price: {product.Price}");
+            }
+        }
+    }
+}
+În acest exemplu:
+
+AsEnumerable() este utilizat pentru a aduce datele în memorie sub formă de secvență enumerable, iar apoi putem procesa aceste date în codul C#.
+ToListAsync() este utilizat pentru a obține rezultatele sub formă de listă asincronă și a le procesa mai târziu, după ce interogarea a fost completată în mod asincron.
+
+
+
+
+
+
+
+
+]
+
